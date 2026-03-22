@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amy's Study Planner ✦</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0d0610;
+  --bg2:       #160b1e;
+  --card:      #1c0f28;
+  --card2:     #221235;
+  --border:    rgba(232,113,138,0.2);
+  --rose:      #e8718a;
+  --pink:      #f4a8b8;
+  --deep-red:  #c0334d;
+  --blush:     #fad4dc;
+  --gold:      #f0c060;
+  --gold-pale: #f8e4a8;
+  --mauve:     #c07090;
+  --lavender:  #a090d0;
+  --cream:     #fff5ee;
+  --muted:     rgba(250,212,220,0.5);
+  --placement: #e8718a;
+  --gate:      #e04455;
+  --aws:       #f0c060;
+  --research:  #c07090;
+  --rest:      #8090c0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--cream);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── STARFIELD ── */
+#stars-canvas {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── LAYOUT ── */
+.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+
+/* ── HEADER ── */
+header {
+  padding: 36px 0 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+.header-left { position: relative; }
+.header-tag {
+  font-family: 'Caveat', cursive;
+  font-size: 13px; color: var(--mauve);
+  letter-spacing: 0.12em; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px;
+}
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700; line-height: 1.05;
+  background: linear-gradient(135deg, var(--blush) 0%, var(--rose) 40%, var(--gold) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.subtitle {
+  font-family: 'Caveat', cursive;
+  font-size: 15px; color: var(--mauve);
+  margin-top: 4px; letter-spacing: 0.05em;
+}
+
+/* ── STREAK WIDGET ── */
+.streak-widget {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px;
+  min-width: 220px;
+  animation: fadeUp 0.6s ease 0.3s both;
+}
+.streak-fire { font-size: 28px; line-height: 1; }
+.streak-info { flex: 1; }
+.streak-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; font-weight: 700;
+  color: var(--gold); line-height: 1;
+}
+.streak-label { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.streak-reset {
+  font-size: 10px; color: var(--mauve); cursor: pointer;
+  background: none; border: none; padding: 2px 6px;
+  border-radius: 6px; transition: background 0.2s;
+}
+.streak-reset:hover { background: rgba(192,112,144,0.15); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px 20px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s ease 0.15s both;
+  display: flex; align-items: center; gap: 16px;
+}
+.progress-text { min-width: 140px; }
+.progress-title { font-size: 13px; font-weight: 500; color: var(--blush); }
+.progress-msg { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Caveat', cursive; font-size: 13px; }
+.progress-track {
+  flex: 1; height: 8px; background: rgba(255,255,255,0.06);
+  border-radius: 99px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--deep-red), var(--rose), var(--gold));
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+.progress-pct { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--rose); min-width: 42px; text-align: right; }
+
+/* ── DAY TABS ── */
+.day-tabs {
+  display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap;
+  animation: fadeUp 0.6s ease 0.2s both;
+}
+.day-tab {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 500;
+  padding: 7px 16px; border-radius: 99px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer;
+  transition: all 0.2s; position: relative;
+  letter-spacing: 0.04em;
+}
+.day-tab:hover { border-color: var(--rose); color: var(--blush); }
+.day-tab.active {
+  background: linear-gradient(135deg, var(--deep-red), var(--rose));
+  border-color: transparent; color: #fff;
+  box-shadow: 0 4px 20px rgba(192,51,77,0.35);
+}
+.day-tab .done-dot {
+  position: absolute; top: 3px; right: 4px;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+/* ── MAIN GRID ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  animation: fadeUp 0.6s ease 0.25s both;
+}
+@media(max-width: 860px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* ── TASK LIST ── */
+.task-panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; overflow: hidden;
+}
+.task-panel-header {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.task-panel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--blush);
+}
+.task-count {
+  font-family: 'Caveat', cursive; font-size: 14px;
+  color: var(--mauve); background: rgba(192,112,144,0.12);
+  padding: 3px 10px; border-radius: 99px;
+}
+
+.section-label {
+  padding: 10px 22px 4px;
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--mauve); opacity: 0.7;
+}
+
+.task-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 22px; cursor: pointer;
+  transition: background 0.15s; border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row:hover { background: rgba(255,255,255,0.03); }
+.task-row.done { opacity: 0.42; }
+.task-row.done .task-title { text-decoration: line-through; color: var(--muted); }
+
+.check {
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1.5px solid; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.task-row.done .check {
+  background: currentColor; border-color: currentColor;
+}
+.check svg { display: none; width: 11px; height: 11px; }
+.task-row.done .check svg { display: block; }
+
+.cat-pip {
+  width: 5px; height: 5px; border-radius: 50%;
+  margin-top: 7px; flex-shrink: 0;
+}
+.task-body { flex: 1; }
+.task-title { font-size: 14px; font-weight: 400; color: var(--cream); line-height: 1.4; }
+.task-time { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: 'Caveat', cursive; font-size: 12px; }
+
+/* ── RIGHT SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 12px; }
+
+.side-card {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+}
+.side-card-header {
+  padding: 11px 16px 10px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.side-card-title {
+  font-family: 'Caveat', cursive;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.03em;
+}
+.side-card-body { padding: 12px 16px; }
+
+/* Goals */
+.goal-row {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 0; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.goal-row:last-child { border-bottom: none; }
+.goal-check {
+  width: 16px; height: 16px; border-radius: 4px;
+  border: 1.5px solid var(--mauve); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.goal-row.done .goal-check { background: var(--mauve); border-color: var(--mauve); }
+.goal-row.done .goal-text { text-decoration: line-through; opacity: 0.5; }
+.goal-check svg { display: none; width: 9px; height: 9px; }
+.goal-row.done .goal-check svg { display: block; }
+.goal-text { font-size: 13px; color: var(--blush); }
+.goal-cat { font-size: 9px; padding: 1px 6px; border-radius: 99px; margin-left: auto; font-weight: 500; }
+
+/* Streak days */
+.streak-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.streak-day {
+  aspect-ratio: 1; border-radius: 8px;
+  border: 1px solid rgba(232,113,138,0.3);
+  background: rgba(255,255,255,0.03);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; font-size: 9px;
+  color: var(--muted); gap: 2px;
+}
+.streak-day:hover { border-color: var(--rose); }
+.streak-day.lit {
+  background: linear-gradient(135deg, rgba(192,51,77,0.3), rgba(232,113,138,0.2));
+  border-color: var(--rose);
+  color: var(--blush);
+  box-shadow: 0 0 12px rgba(232,113,138,0.2);
+}
+.streak-day .star { font-size: 14px; line-height: 1; }
+
+/* Notes */
+.notes-area {
+  width: 100%; background: transparent; border: none; outline: none;
+  color: var(--blush); font-family: 'Caveat', cursive; font-size: 15px;
+  line-height: 1.8; resize: none; min-height: 90px;
+}
+.notes-area::placeholder { color: rgba(250,212,220,0.25); }
+
+/* Weekend */
+.wk-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+}
+.wk-row:last-child { border-bottom: none; }
+.wk-tag {
+  font-size: 9px; font-weight: 700; padding: 2px 6px;
+  border-radius: 5px; min-width: 28px; text-align: center;
+}
+.wk-check {
+  width: 13px; height: 13px; border-radius: 3px;
+  border: 1px solid var(--mauve); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.wk-row.done .wk-check { background: var(--mauve); }
+.wk-row.done .wk-text { text-decoration: line-through; opacity: 0.45; }
+.wk-text { font-size: 12px; color: var(--blush); }
+
+/* Legend */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 16px 0 4px;
+  animation: fadeUp 0.6s ease 0.35s both;
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Confetti pop */
+.confetti-pop {
+  position: fixed; pointer-events: none; z-index: 999;
+  font-size: 18px; animation: confPop 0.8s ease forwards;
+}
+@keyframes confPop {
+  0%   { transform: translateY(0) scale(0.5); opacity: 1; }
+  60%  { transform: translateY(-50px) scale(1.3); opacity: 1; }
+  100% { transform: translateY(-80px) scale(1); opacity: 0; }
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: linear-gradient(135deg, var(--deep-red), var(--rose));
+  color: #fff; padding: 10px 24px; border-radius: 99px;
+  font-family: 'Caveat', cursive; font-size: 16px;
+  box-shadow: 0 8px 30px rgba(192,51,77,0.4);
+  transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+  z-index: 100; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232,113,138,0.3); border-radius: 99px; }
+
+/* Moon decoration */
+.moon-deco {
+  position: fixed; top: 24px; right: 32px;
+  width: 70px; height: 70px; pointer-events: none; z-index: 0;
+  opacity: 0.55;
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<!-- Moon SVG deco -->
+<svg class="moon-deco" viewBox="0 0 70 70">
+  <defs>
+    <radialGradient id="moonGlow" cx="40%" cy="35%">
+      <stop offset="0%" stop-color="#f8e4a8" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#f0c060" stop-opacity="0.6"/>
+    </radialGradient>
+  </defs>
+  <circle cx="36" cy="34" r="26" fill="url(#moonGlow)"/>
+  <circle cx="48" cy="30" r="21" fill="#0d0610"/>
+  <circle cx="22" cy="18" r="4" fill="rgba(240,192,96,0.25)"/>
+  <circle cx="52" cy="52" r="3" fill="rgba(240,192,96,0.2)"/>
+</svg>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-tag">✦ third year devops grind ✦</div>
+      <h1>Amy's<br>Study Planner</h1>
+      <div class="subtitle">placement · gate · aws · research · you got this 🌙</div>
+    </div>
+    <div class="streak-widget">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-info">
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+      <button class="streak-reset" onclick="resetToday()">reset day</button>
+    </div>
+  </header>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar-wrap">
+    <div class="progress-text">
+      <div class="progress-title" id="prog-title">Today's progress</div>
+      <div class="progress-msg" id="prog-msg">let's get started ✨</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-pct" id="prog-pct">0%</div>
+  </div>
+
+  <!-- DAY TABS -->
+  <div class="day-tabs" id="day-tabs"></div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- TASKS -->
+    <div class="task-panel" id="task-panel"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Streak tracker -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <span style="font-size:16px">⭐</span>
+          <span class="side-card-title" style="color:var(--gold)">Weekly streak</span>
+        </div>
+        <div class="side-card-body">
+          <div class="streak-days" id="streak-days"></div>
+        </div>
+      </div>
+
+      <!-- Goals -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <span style="font-size:16px">🎯</span>
+          <span class="side-card-title" style="color:var(--rose)">Goals</span>
+        </div>
+        <div class="side-card-body" id="goals-body"></div>
+      </div>
+
+      <!-- Weekend plan -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <span style="font-size:16px">🌙</span>
+          <span class="side-card-title" style="color:var(--mauve)">Weekend plan</span>
+        </div>
+        <div class="side-card-body" id="weekend-body"></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="side-card">
+        <div class="side-card-header">
+          <span style="font-size:16px">✍️</span>
+          <span class="side-card-title" style="color:var(--gold)">Notes & reminders</span>
+        </div>
+        <div class="side-card-body">
+          <textarea class="notes-area" id="notes-area" placeholder="jot down anything here... ideas, reminders, things to google ✨" rows="5"></textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--placement)"></div> placement</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--gate)"></div> gate</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--aws)"></div> aws</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--research)"></div> research</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--rest)"></div> rest</div>
+    <div style="margin-left:auto; font-size:11px; color:var(--muted); font-family:'Caveat',cursive; font-size:13px">"the grind is real but so is the glow-up" ✦</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+const CAT_COL = { placement:'#e8718a', gate:'#e04455', aws:'#f0c060', research:'#c07090', rest:'#8090c0', class:'#d07850' };
+const CAT_BG  = { placement:'rgba(232,113,138,0.12)', gate:'rgba(224,68,85,0.12)', aws:'rgba(240,192,96,0.12)', research:'rgba(192,112,144,0.12)', rest:'rgba(128,144,192,0.12)', class:'rgba(208,120,80,0.12)' };
+
+const SCHEDULE = {
+  Mon:{accent:'#e8718a',tasks:[
+    {id:'m1',sec:'Morning',title:'Morning warm-up',desc:'6:30–7:00 · 1 LeetCode or GFG problem',cat:'placement'},
+    {id:'m2',sec:'Classes',title:'College classes',desc:'7:00–6:30 · OS, Networks, DBMS help both placement & GATE',cat:'class'},
+    {id:'m3',sec:'Evening',title:'Wind-down + dinner',desc:'6:30–7:00 · Eat, decompress, short walk',cat:'rest'},
+    {id:'m4',sec:'Evening',title:'DSA practice',desc:'7:00–8:00 · 1 problem + review editorial',cat:'placement'},
+    {id:'m5',sec:'Evening',title:'AWS module',desc:'8:00–8:45 · 1 video/module — consistent beats binge',cat:'aws'},
+    {id:'m6',sec:'Evening',title:'Research notes',desc:'8:45–9:15 · Review drafts, jot ideas, 1 reference paper',cat:'research'},
+  ]},
+  Tue:{accent:'#f4a8b8',tasks:[
+    {id:'t1',sec:'Morning',title:'Aptitude warm-up',desc:'6:30–7:00 · IndiaBix or RS Aggarwal',cat:'placement'},
+    {id:'t2',sec:'Classes',title:'College classes',desc:'7:00–6:30 · Stay engaged',cat:'class'},
+    {id:'t3',sec:'Evening',title:'Wind-down + dinner',desc:'6:30–7:00 · Break',cat:'rest'},
+    {id:'t4',sec:'Evening',title:'Aptitude topic practice',desc:'7:00–8:00 · Time & work, percentages, permutations',cat:'placement'},
+    {id:'t5',sec:'Evening',title:'AWS module',desc:'8:00–8:45 · One concept per night',cat:'aws'},
+    {id:'t6',sec:'Evening',title:'Research notes',desc:'8:45–9:15 · Light work only on weekdays',cat:'research'},
+  ]},
+  Wed:{accent:'#f0c060',tasks:[
+    {id:'w1',sec:'Morning',title:'LeetCode warm-up',desc:'6:30–7:00 · Focus on a pattern you struggled with',cat:'placement'},
+    {id:'w2',sec:'Classes',title:'College classes',desc:'7:00–6:30 · Midweek push',cat:'class'},
+    {id:'w3',sec:'Evening',title:'Wind-down + dinner',desc:'6:30–7:00 · Break',cat:'rest'},
+    {id:'w4',sec:'Evening',title:'DSA practice',desc:'7:00–8:00 · Midweek check on patterns learned',cat:'placement'},
+    {id:'w5',sec:'Evening',title:'AWS module',desc:'8:00–8:45 · Keep the streak going',cat:'aws'},
+    {id:'w6',sec:'Evening',title:'Admin + mistake log',desc:'8:45–9:15 · Write tomorrow\'s tasks, update mistake log',cat:'rest'},
+  ]},
+  Thu:{accent:'#c07090',tasks:[
+    {id:'th1',sec:'Morning',title:'Aptitude warm-up',desc:'6:30–7:00 · Revisit Tuesday\'s mistake log',cat:'placement'},
+    {id:'th2',sec:'Classes',title:'College classes',desc:'7:00–6:30 · Almost Friday!',cat:'class'},
+    {id:'th3',sec:'Evening',title:'Wind-down + dinner',desc:'6:30–7:00 · Break',cat:'rest'},
+    {id:'th4',sec:'Evening',title:'Aptitude drill',desc:'7:00–8:00 · New topic or drill the weak one',cat:'placement'},
+    {id:'th5',sec:'Evening',title:'AWS module',desc:'8:00–8:45 · One concept per night',cat:'aws'},
+    {id:'th6',sec:'Evening',title:'Research notes',desc:'8:45–9:15 · Prep weekend research block',cat:'research'},
+  ]},
+  Fri:{accent:'#a090d0',tasks:[
+    {id:'f1',sec:'Morning',title:'LeetCode warm-up',desc:'6:30–7:00 · Attempt something slightly harder',cat:'placement'},
+    {id:'f2',sec:'Classes',title:'College classes',desc:'7:00–6:30 · Last push of the week!',cat:'class'},
+    {id:'f3',sec:'Evening',title:'Wind-down + dinner',desc:'6:30–7:00 · Friday — proper break!',cat:'rest'},
+    {id:'f4',sec:'Evening',title:'DSA + weekly review',desc:'7:00–8:00 · Flip through mistake log, spot gaps',cat:'placement'},
+    {id:'f5',sec:'Evening',title:'Plan your weekend',desc:'8:00–8:30 · List GATE topic, AWS chapters, research tasks',cat:'rest'},
+    {id:'f6',sec:'Evening',title:'Early sleep!',desc:'8:30 onwards · Recharge. Weekend starts at 8am',cat:'rest'},
+  ]},
+  Sat:{accent:'#e8718a',tasks:[
+    {id:'sa1',sec:'Morning',title:'GATE — core subject',desc:'8:00–10:00 · OS/DBMS/CN/Algorithms. Rotate weekly',cat:'gate'},
+    {id:'sa2',sec:'Morning',title:'Placement mock test',desc:'10:00–11:30 · 3–5 DSA problems OR full aptitude mock',cat:'placement'},
+    {id:'sa3',sec:'Midday',title:'Lunch break',desc:'11:30–12:30 · Mandatory rest',cat:'rest'},
+    {id:'sa4',sec:'Afternoon',title:'Research — active writing',desc:'12:30–2:30 · Paper writing, analysis, faculty updates',cat:'research'},
+    {id:'sa5',sec:'Afternoon',title:'AWS lab / practice exam',desc:'2:30–4:00 · Hands-on labs or practice exams',cat:'aws'},
+    {id:'sa6',sec:'Evening',title:'Rest — protect evening',desc:'4:00+ · You\'ve done 6+ hrs. Recharge',cat:'rest'},
+  ]},
+  Sun:{accent:'#c07090',tasks:[
+    {id:'su1',sec:'Morning',title:'GATE — different subject',desc:'8:00–10:00 · New topic + 10–15 PYQs at end',cat:'gate'},
+    {id:'su2',sec:'Morning',title:'Placement — weak area',desc:'10:00–11:30 · Core CS, SQL queries, CN basics',cat:'placement'},
+    {id:'su3',sec:'Midday',title:'Lunch break',desc:'11:30–12:30 · Mandatory',cat:'rest'},
+    {id:'su4',sec:'Afternoon',title:'Research — review & plan',desc:'12:30–2:00 · Review Saturday\'s work, plan the week',cat:'research'},
+    {id:'su5',sec:'Afternoon',title:'Weekly revision sweep',desc:'2:00–3:30 · All notes: DSA patterns, formulas, AWS',cat:'placement'},
+    {id:'su6',sec:'Evening',title:'Full rest + prep Monday',desc:'3:30+ · Set alarms, plan Monday, sleep by 10pm',cat:'rest'},
+  ]},
+};
+
+const GOALS = [
+  {id:'g1',cat:'placement',text:'Clear placement written round'},
+  {id:'g2',cat:'gate',text:'Cover 4 GATE core subjects'},
+  {id:'g3',cat:'aws',text:'Finish AWS course'},
+  {id:'g4',cat:'research',text:'Submit research paper'},
+  {id:'g5',cat:'placement',text:'Build DSA problem streak'},
+];
+
+const WEEKEND = [
+  {id:'wk1',day:'SAT',col:'#e8718a',text:'8:00   GATE deep dive (2 hrs)'},
+  {id:'wk2',day:'SAT',col:'#e8718a',text:'10:00  Placement mock test'},
+  {id:'wk3',day:'SAT',col:'#e8718a',text:'12:30  Research writing block'},
+  {id:'wk4',day:'SAT',col:'#e8718a',text:'2:30   AWS hands-on lab'},
+  {id:'wk5',day:'SUN',col:'#c07090',text:'8:00   GATE (new subject)'},
+  {id:'wk6',day:'SUN',col:'#c07090',text:'10:00  Weak area focus'},
+  {id:'wk7',day:'SUN',col:'#c07090',text:'2:00   Weekly revision sweep'},
+];
+
+const MSGS = [
+  'let\'s get started ✨',
+  'one down! keep going 🌙',
+  'you\'re moving, keep it up ⭐',
+  'halfway! you\'re doing amazing 🔥',
+  'more done than left — finish strong!',
+  'almost there, last push! ✦',
+  'all done! you crushed it today 🌟',
+];
+
+// ── STATE ──────────────────────────────────────────
+let S = {};
+try { S = JSON.parse(localStorage.getItem('amy_planner_v2') || '{}'); } catch(e){}
+if (!S.tasks)   S.tasks   = {};
+if (!S.goals)   S.goals   = {};
+if (!S.wk)      S.wk      = {};
+if (!S.streak)  S.streak  = 0;
+if (!S.days)    S.days    = {};
+if (!S.notes)   S.notes   = '';
+
+const todayIdx = (new Date().getDay() + 6) % 7;
+const todayKey = DAYS[todayIdx];
+let activeDay  = todayKey;
+
+function save() { try { localStorage.setItem('amy_planner_v2', JSON.stringify(S)); } catch(e){} }
+
+// ── STREAK LOGIC ──────────────────────────────────
+function updateStreak() {
+  const today = new Date().toDateString();
+  const dayTasks = SCHEDULE[todayKey].tasks;
+  const doneCnt  = dayTasks.filter(t => S.tasks[t.id]).length;
+  if (doneCnt > 0 && !S.days[today]) {
+    S.days[today] = true;
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    if (S.days[yesterday.toDateString()]) { S.streak++; }
+    else { S.streak = 1; }
+  }
+}
+
+// ── STARS CANVAS ─────────────────────────────────
+function initStars() {
+  const cv  = document.getElementById('stars-canvas');
+  const ctx = cv.getContext('2d');
+  let W2, H2, stars;
+
+  function resize() {
+    W2 = cv.width  = window.innerWidth;
+    H2 = cv.height = window.innerHeight;
+    genStars();
+    draw();
+  }
+
+  function genStars() {
+    stars = Array.from({length:220}, () => ({
+      x: Math.random()*W2, y: Math.random()*H2,
+      r: Math.random()*1.5+0.3,
+      a: Math.random()*0.8+0.1,
+      tw: Math.random()*3+1,
+      tp: Math.random()*Math.PI*2,
+      col: Math.random()>0.6 ? '#f4a8b8' : Math.random()>0.5 ? '#f0c060' : '#ffffff'
+    }));
+  }
+
+  let t = 0;
+  function draw() {
+    ctx.clearRect(0,0,W2,H2);
+    t += 0.008;
+    stars.forEach(s => {
+      const alpha = s.a * (0.5 + 0.5*Math.sin(t*s.tw + s.tp));
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle   = s.col;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+}
+
+// ── RENDER ────────────────────────────────────────
+function getDayTasks(day) { return SCHEDULE[day].tasks; }
+function getDone(day)     { return getDayTasks(day).filter(t => S.tasks[t.id]).length; }
+function getTotal(day)    { return getDayTasks(day).length; }
+
+function renderTabs() {
+  const el = document.getElementById('day-tabs');
+  el.innerHTML = DAYS.map((d,i) => {
+    const done  = getDone(d) === getTotal(d) && getTotal(d) > 0;
+    const today = d === todayKey;
+    return `<button class="day-tab${d===activeDay?' active':''}" onclick="switchDay('${d}')">
+      ${DAY_FULL[i]}${today?' ·today':''}
+      ${done?'<span class="done-dot"></span>':''}
+    </button>`;
+  }).join('');
+}
+
+function renderTasks() {
+  const data  = SCHEDULE[activeDay];
+  const tasks = data.tasks;
+  const accent = data.accent;
+
+  let sections = {};
+  tasks.forEach(t => { sections[t.sec] = sections[t.sec] || []; sections[t.sec].push(t); });
+
+  let html = `<div class="task-panel-header">
+    <div class="task-panel-title">${activeDay === todayKey ? 'Today' : DAY_FULL[DAYS.indexOf(activeDay)]}</div>
+    <div class="task-count">${getDone(activeDay)} / ${getTotal(activeDay)} done</div>
+  </div>`;
+
+  Object.entries(sections).forEach(([sec, secTasks]) => {
+    html += `<div class="section-label">${sec}</div>`;
+    secTasks.forEach(t => {
+      const done = !!S.tasks[t.id];
+      const cc   = CAT_COL[t.cat] || '#aaa';
+      html += `<div class="task-row${done?' done':''}" onclick="toggleTask('${t.id}',event)" style="--check-col:${cc}">
+        <div class="check" style="border-color:${cc}; color:${cc}">
+          <svg viewBox="0 0 11 9" fill="none"><polyline points="1,4.5 4,7.5 10,1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="cat-pip" style="background:${cc}"></div>
+        <div class="task-body">
+          <div class="task-title">${t.title}</div>
+          <div class="task-time">${t.desc}</div>
+        </div>
+      </div>`;
+    });
+  });
+
+  document.getElementById('task-panel').innerHTML = html;
+}
+
+function renderProgress() {
+  const done  = getDone(activeDay);
+  const total = getTotal(activeDay);
+  const pct   = total ? Math.round(done/total*100) : 0;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-pct').textContent  = pct+'%';
+  document.getElementById('prog-msg').textContent  =
+    done === total && total > 0 ? MSGS[6] :
+    done === 0 ? MSGS[0] :
+    MSGS[Math.min(Math.floor(done/(total||1)*5)+1, 5)];
+  document.getElementById('prog-title').textContent =
+    activeDay === todayKey ? "Today's progress" : DAY_FULL[DAYS.indexOf(activeDay)] + "'s progress";
+  document.getElementById('streak-num').textContent = S.streak;
+}
+
+function renderStreakDays() {
+  const el = document.getElementById('streak-days');
+  el.innerHTML = DAYS.map((d,i) => {
+    const done = getDone(d) === getTotal(d) && getTotal(d)>0;
+    return `<div class="streak-day${done?' lit':''}" onclick="switchDay('${d}')" title="${DAY_FULL[i]}">
+      <span class="star">${done?'⭐':'✦'}</span>
+      <span>${d}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderGoals() {
+  const el = document.getElementById('goals-body');
+  el.innerHTML = GOALS.map(g => {
+    const done = !!S.goals[g.id];
+    const cc   = CAT_COL[g.cat];
+    return `<div class="goal-row${done?' done':''}" onclick="toggleGoal('${g.id}')">
+      <div class="goal-check" style="border-color:${cc};${done?'background:'+cc:''}">
+        <svg viewBox="0 0 9 8" fill="none"><polyline points="1,4 3.5,6.5 8,1" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <span class="goal-text">${g.text}</span>
+      <span class="goal-cat" style="background:${CAT_BG[g.cat]};color:${cc}">${g.cat}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderWeekend() {
+  const el = document.getElementById('weekend-body');
+  el.innerHTML = WEEKEND.map(w => {
+    const done = !!S.wk[w.id];
+    return `<div class="wk-row${done?' done':''}" onclick="toggleWk('${w.id}')">
+      <div class="wk-tag" style="background:${w.col}20;color:${w.col}">${w.day}</div>
+      <div class="wk-check" style="border-color:${w.col};${done?'background:'+w.col:''}"></div>
+      <span class="wk-text">${w.text}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderAll() {
+  renderTabs();
+  renderTasks();
+  renderProgress();
+  renderStreakDays();
+  renderGoals();
+  renderWeekend();
+}
+
+// ── ACTIONS ───────────────────────────────────────
+function switchDay(d) { activeDay = d; renderAll(); }
+
+function toggleTask(id, e) {
+  S.tasks[id] = !S.tasks[id];
+  if (S.tasks[id]) spawnConfetti(e);
+  updateStreak();
+  save();
+  renderAll();
+  // All done toast
+  if (getDone(activeDay) === getTotal(activeDay)) {
+    showToast('🌟 All done for ' + (activeDay===todayKey?'today':'this day') + '! You crushed it!');
+  }
+}
+
+function toggleGoal(id) {
+  S.goals[id] = !S.goals[id];
+  save();
+  renderGoals();
+  if (S.goals[id]) showToast('🎯 Goal marked! Keep going!');
+}
+
+function toggleWk(id) {
+  S.wk[id] = !S.wk[id];
+  save();
+  renderWeekend();
+}
+
+function resetToday() {
+  getDayTasks(todayKey).forEach(t => delete S.tasks[t.id]);
+  save(); renderAll();
+}
+
+// ── CONFETTI ─────────────────────────────────────
+const CONF_CHARS = ['✦','⭐','✿','♥','★','✨','🌙'];
+function spawnConfetti(e) {
+  for (let i=0; i<4; i++) {
+    const el  = document.createElement('div');
+    el.className = 'confetti-pop';
+    el.textContent = CONF_CHARS[Math.floor(Math.random()*CONF_CHARS.length)];
+    el.style.left  = (e.clientX + Math.random()*40-20) + 'px';
+    el.style.top   = (e.clientY) + 'px';
+    el.style.animationDelay = (i*0.08) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── NOTES ─────────────────────────────────────────
+function initNotes() {
+  const el = document.getElementById('notes-area');
+  el.value = S.notes || '';
+  el.addEventListener('input', () => { S.notes = el.value; save(); });
+}
+
+// ── BOOT ──────────────────────────────────────────
+initStars();
+initNotes();
+renderAll();
+</script>
+</body>
+</html>
